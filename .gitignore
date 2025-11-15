@@ -1,0 +1,16 @@
+node_modules/
+*.db
+*.sqlite
+*.sqlite3
+lastblock.txt
+logs/
+build/
+.DS_Store
+
+# Environment files (keep .env.example)
+.env
+backend/.env
+frontend/.env
+
+# Documentation
+docs/PROJECT_SUMMARY.md

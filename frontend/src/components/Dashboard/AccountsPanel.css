@@ -1,0 +1,148 @@
+.accounts-list {
+  display: grid;
+  gap: 12px;
+}
+
+.account-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  background-color: var(--surface-hover);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  transition: all 0.2s;
+}
+
+.account-card:hover {
+  border-color: var(--twitter-blue);
+  box-shadow: 0 2px 8px rgba(29, 161, 242, 0.2);
+}
+
+.account-info {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.account-username {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.inactive-badge {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 2px 8px;
+  background-color: rgba(136, 153, 166, 0.3);
+  color: var(--text-secondary);
+  border-radius: 4px;
+}
+
+.account-vp,
+.account-threshold {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.vp-value {
+  font-weight: 700;
+  color: var(--twitter-blue);
+}
+
+.account-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.button-small {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.toggle-button.active {
+  background-color: rgba(23, 191, 99, 0.2);
+  color: var(--success);
+  border: 1px solid var(--success);
+}
+
+.toggle-button.inactive {
+  background-color: rgba(136, 153, 166, 0.2);
+  color: var(--text-secondary);
+  border: 1px solid var(--text-secondary);
+}
+
+.toggle-button.active:hover {
+  background-color: rgba(224, 36, 94, 0.2);
+  color: var(--error);
+  border-color: var(--error);
+}
+
+.toggle-button.inactive:hover {
+  background-color: rgba(23, 191, 99, 0.2);
+  color: var(--success);
+  border-color: var(--success);
+}
+
+.button-danger-small {
+  background-color: rgba(224, 36, 94, 0.2);
+  color: var(--error);
+  border: 1px solid var(--error);
+}
+
+.button-small:hover,
+.button-danger-small:hover {
+  opacity: 0.8;
+}
+
+/* Modal styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.modal-content {
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 32px;
+  max-width: 500px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modal-content h3 {
+  font-size: 24px;
+  margin-bottom: 24px;
+  color: var(--text);
+}
+
+.modal-content .form-group {
+  margin-bottom: 16px;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+  justify-content: flex-end;
+}

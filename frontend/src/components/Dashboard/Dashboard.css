@@ -1,0 +1,152 @@
+.dashboard {
+  min-height: 100vh;
+  background-color: var(--background);
+}
+
+.dashboard-nav {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  padding: 16px 32px;
+  background-color: var(--surface);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.nav-logo {
+  width: 40px;
+  height: 40px;
+  transition: transform 0.3s ease;
+}
+
+.nav-logo:hover {
+  transform: rotate(360deg);
+}
+
+.nav-brand h1 {
+  font-size: 24px;
+  color: var(--twitter-blue);
+  font-weight: 700;
+}
+
+.nav-tabs {
+  display: flex;
+  gap: 8px;
+  flex: 1;
+}
+
+.nav-tab {
+  padding: 10px 20px;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: 9999px;
+  transition: all 0.2s;
+}
+
+.nav-tab:hover {
+  background-color: var(--surface-hover);
+  color: var(--text);
+}
+
+.nav-tab.active {
+  background-color: var(--twitter-blue);
+  color: white;
+}
+
+.logout-btn {
+  margin-left: auto;
+}
+
+.dashboard-content {
+  padding: 32px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.overview-layout {
+  display: grid;
+  gap: 24px;
+  grid-template-columns: 1fr 1fr;
+}
+
+.overview-layout > :first-child {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 968px) {
+  .overview-layout {
+    grid-template-columns: 1fr;
+  }
+  
+  .dashboard-nav {
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  
+  .nav-tabs {
+    order: 3;
+    flex-basis: 100%;
+  }
+}
+
+.section {
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 24px;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.section-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.section-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 48px 24px;
+  color: var(--text-secondary);
+}
+
+.empty-state-snapie {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 16px;
+  opacity: 0.5;
+  filter: grayscale(50%);
+}
+
+.empty-state-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.empty-state-text {
+  font-size: 16px;
+  margin-bottom: 8px;
+}
