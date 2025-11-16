@@ -292,8 +292,14 @@ else
     exit 1
 fi
 
-# Get server IP
-SERVER_IP=$(curl -s ifconfig.me || hostname -I | awk '{print $1}')
+# Get server IP (force IPv4)
+SERVER_IP=$(curl -4 -s ifconfig.me 2>/dev/null || hostname -I | grep -oE '([0-9]{1,3}\.){3}[0-9]{1,3}' | head -1)
+
+# Warn if no IPv4 found
+if [[ ! "$SERVER_IP" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+    echo -e "${YELLOW}⚠️  Could not detect IPv4 address${NC}"
+    SERVER_IP="YOUR_VPS_IP"
+fi
 
 echo ""
 echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
