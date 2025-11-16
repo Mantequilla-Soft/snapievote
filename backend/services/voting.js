@@ -55,9 +55,21 @@ class VotingService {
 
         await this.processBlock(block);
         
-        // Save last processed block
-        this.saveLastProcessedBlock(block.block_id);
-        this.dbService.updateBotStatus(1, block.block_id);
+        // Save last processed block as a numeric block number (avoid storing block id string)
+        // Some RPC block objects don't expose a numeric block number consistently, so
+        // fetch the current head block number and store that. This guarantees a numeric
+        // value that can be parsed on restart.
+        try {
+          const currentBlockNumber = await this.hiveService.getCurrentBlockNumber();
+          this.saveLastProcessedBlock(currentBlockNumber);
+          this.dbService.updateBotStatus(1, currentBlockNumber);
+        } catch (err) {
+          // Fallback: if fetching head block number fails, still attempt to store block_id
+          // (older behavior) but it will be ignored on restart.
+          console.error('Failed to fetch current block number for saving:', err.message);
+          this.saveLastProcessedBlock(typeof block === 'string' ? block : (block.block_id || ''));
+          this.dbService.updateBotStatus(1, block.block_id || null);
+        }
       });
     } catch (error) {
       console.error('Streaming error:', error);
@@ -196,21 +208,31 @@ class VotingService {
         );
 
         // Calculate vote weight (-10000 to 10000)
-        const weight = listType === 'shit' 
+        // Calculate vote weight (-10000 to 10000)
+        const weight = listType === 'shit'
           ? -Math.abs(voteWeight * 100) // Negative for downvote
           : Math.abs(voteWeight * 100);  // Positive for upvote
+
+        // Log the exact weight we'll send for transparency (and debugging)
+        logger.info(`${account.username} - Sending vote weight: ${weight} (${(weight/100).toFixed(2)}%) [${listType}]`);
 
         // Cast vote
         await this.hiveService.vote(account.username, postingKey, author, permlink, weight);
 
-        // Record vote
+        // Record vote (store scaled weight used in operation)
         this.dbService.addVoteHistory(account.username, author, permlink, weight, listType, true);
         this.dbService.incrementDailyVoteCount(author, listType);
 
         logger.success(`${account.username} voted on @${author}/${permlink} (${weight/100}%)`);
       } catch (error) {
         logger.error(`Vote failed for ${account.username}: ${error.message}`);
-        this.dbService.addVoteHistory(account.username, author, permlink, voteWeight * 100, listType, false, error.message);
+        // Record failed attempt with the same scaled weight for consistency
+        try {
+          this.dbService.addVoteHistory(account.username, author, permlink, weight, listType, false, error.message);
+        } catch (e) {
+          // If weight isn't defined for some reason, fall back to voteWeight * 100
+          this.dbService.addVoteHistory(account.username, author, permlink, (voteWeight || 0) * 100, listType, false, error.message);
+        }
       }
     }
   }
