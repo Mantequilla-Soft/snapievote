@@ -173,13 +173,17 @@ class VotingService {
 
     for (const account of accounts) {
       try {
-        // Get account VP
+        // Get account VP (both upvote and downvote)
         const vpInfo = await this.hiveService.getAccountVP(account.username);
-        const currentVP = parseFloat(vpInfo.votingPower);
+        const upvoteVP = parseFloat(vpInfo.votingPower);
+        const downvoteVP = parseFloat(vpInfo.downvotePower);
 
-        // Check VP threshold
+        // Check the correct VP threshold based on list type
+        const currentVP = listType === 'shit' ? downvoteVP : upvoteVP;
+        const vpType = listType === 'shit' ? 'Downvote' : 'Upvote';
+
         if (currentVP < account.min_vp_threshold) {
-          logger.warning(`Skipping vote: ${account.username} VP (${currentVP.toFixed(2)}%) below threshold (${account.min_vp_threshold}%)`);
+          logger.warning(`Skipping vote: ${account.username} ${vpType} VP (${currentVP.toFixed(2)}%) below threshold (${account.min_vp_threshold}%)`);
           continue;
         }
 

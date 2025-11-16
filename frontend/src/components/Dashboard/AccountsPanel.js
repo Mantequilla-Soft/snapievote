@@ -22,13 +22,16 @@ function AccountsPanel({ compact = false }) {
       const response = await accounts.getAll();
       setAccountsList(response.data);
       
-      // Fetch VP for each account
+      // Fetch VP for each account (both upvote and downvote)
       response.data.forEach(async (account) => {
         try {
           const vpResponse = await accounts.getVP(account.username);
           setVpData(prev => ({
             ...prev,
-            [account.username]: vpResponse.data.votingPower
+            [account.username]: {
+              upvote: vpResponse.data.votingPower,
+              downvote: vpResponse.data.downvotePower
+            }
           }));
         } catch (err) {
           console.error(`Failed to fetch VP for ${account.username}`);
@@ -107,7 +110,10 @@ function AccountsPanel({ compact = false }) {
                     {!account.active && <span className="inactive-badge">Paused</span>}
                   </div>
                   <div className="account-vp">
-                    VP: <span className="vp-value">{vpData[account.username] || '...'}</span>%
+                    👍 Upvote VP: <span className="vp-value">{vpData[account.username]?.upvote || '...'}</span>%
+                  </div>
+                  <div className="account-vp">
+                    👎 Downvote VP: <span className="vp-value">{vpData[account.username]?.downvote || '...'}</span>%
                   </div>
                   <div className="account-threshold">
                     Min VP: {account.min_vp_threshold}%

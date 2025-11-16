@@ -9,7 +9,7 @@ class HiveService {
     ]);
   }
 
-  // Calculate current voting power
+  // Calculate current voting power (upvote)
   calculateVotingPower(account) {
     const lastVoteTime = new Date(account.last_vote_time + 'Z').getTime();
     const now = Date.now();
@@ -23,16 +23,51 @@ class HiveService {
     return currentVP / 100; // Return as percentage (0-100)
   }
 
-  // Get account info and VP
+  // Calculate downvote mana (separate from upvote VP)
+  async calculateDownvoteVP(account) {
+    try {
+      // Get global properties for regen time
+      const gprops = await this.client.database.getDynamicGlobalProperties();
+      
+      const downvoteManabar = account.downvote_manabar;
+      const regenSeconds = gprops.downvote_regen_seconds || 432000; // 5 days default
+      
+      // Max mana based on vesting shares
+      const vestingShares = parseFloat(account.vesting_shares.split(' ')[0]);
+      const maxMana = vestingShares * 1e6;
+      
+      const currentMana = parseInt(downvoteManabar.current_mana);
+      const lastUpdate = downvoteManabar.last_update_time;
+      
+      const now = Math.floor(Date.now() / 1000);
+      
+      // Calculate regenerated mana
+      const regenerated = ((now - lastUpdate) * maxMana) / regenSeconds;
+      const finalMana = Math.min(currentMana + regenerated, maxMana);
+      
+      // VP in percent (0-100)
+      const downvoteVP = (finalMana / maxMana) * 100;
+      
+      return downvoteVP;
+    } catch (error) {
+      console.error('Error calculating downvote VP:', error);
+      return 0;
+    }
+  }
+
+  // Get account info and VP (both upvote and downvote)
   async getAccountVP(username) {
     try {
       const [account] = await this.client.database.getAccounts([username]);
       if (!account) throw new Error('Account not found');
       
-      const vp = this.calculateVotingPower(account);
+      const upvoteVP = this.calculateVotingPower(account);
+      const downvoteVP = await this.calculateDownvoteVP(account);
+      
       return {
         username: account.name,
-        votingPower: vp.toFixed(2),
+        votingPower: upvoteVP.toFixed(2),      // Upvote VP
+        downvotePower: downvoteVP.toFixed(2),  // Downvote VP
         lastVoteTime: account.last_vote_time
       };
     } catch (error) {
