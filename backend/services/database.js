@@ -214,7 +214,7 @@ class DatabaseService {
     return result ? result.vote_count : 0;
   }
 
-  incrementDailyVoteCount(targetUsername, listType) {
+  incrementDailyVoteCount(targetUsername, listType, count = 1) {
     const today = new Date().toISOString().split('T')[0];
     const exists = this.db.prepare(
       'SELECT id FROM daily_vote_count WHERE target_username = ? AND list_type = ? AND vote_date = ?'
@@ -222,12 +222,12 @@ class DatabaseService {
 
     if (exists) {
       this.db.prepare(
-        'UPDATE daily_vote_count SET vote_count = vote_count + 1 WHERE target_username = ? AND list_type = ? AND vote_date = ?'
-      ).run(targetUsername, listType, today);
+        'UPDATE daily_vote_count SET vote_count = vote_count + ? WHERE target_username = ? AND list_type = ? AND vote_date = ?'
+      ).run(count, targetUsername, listType, today);
     } else {
       this.db.prepare(
-        'INSERT INTO daily_vote_count (target_username, list_type, vote_date, vote_count) VALUES (?, ?, ?, 1)'
-      ).run(targetUsername, listType, today);
+        'INSERT INTO daily_vote_count (target_username, list_type, vote_date, vote_count) VALUES (?, ?, ?, ?)'
+      ).run(targetUsername, listType, today, count);
     }
   }
 

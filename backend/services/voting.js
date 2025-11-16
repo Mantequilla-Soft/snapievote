@@ -153,6 +153,7 @@ class VotingService {
       permlink,
       voteWeight: listEntry.vote_weight,
       listType,
+      maxVotesPerDay: listEntry.max_votes_per_day,
       scheduledTime: voteTime
     });
 
@@ -173,7 +174,7 @@ class VotingService {
 
   // Execute a vote with all accounts
   async executeVote(vote) {
-    const { author, permlink, voteWeight, listType } = vote;
+    const { author, permlink, voteWeight, listType, maxVotesPerDay } = vote;
     const accounts = this.dbService.getAccounts().filter(acc => acc.active);
 
     logger.vote(`Executing ${listType} vote for @${author}/${permlink} with ${accounts.length} account(s)`);
@@ -183,7 +184,25 @@ class VotingService {
       return;
     }
 
-    for (const account of accounts) {
+    // Enforce per-target daily limits across ALL accounts.
+    // Determine how many votes are remaining for this target today.
+    let remainingVotes = Infinity;
+    if (typeof maxVotesPerDay === 'number') {
+      const dailyCount = this.dbService.getDailyVoteCount(author, listType);
+      remainingVotes = Math.max(0, maxVotesPerDay - dailyCount);
+      if (remainingVotes <= 0) {
+        logger.warning(`Skipping ${author}: daily limit reached for ${listType} (${dailyCount}/${maxVotesPerDay})`);
+        return;
+      }
+    }
+
+    // Only attempt up to remainingVotes (if defined) to avoid exceeding daily cap
+    const accountsToUse = (remainingVotes === Infinity)
+      ? accounts
+      : accounts.slice(0, remainingVotes);
+
+    let successCount = 0;
+    for (const account of accountsToUse) {
       try {
         // Get account VP (both upvote and downvote)
         const vpInfo = await this.hiveService.getAccountVP(account.username);
@@ -219,9 +238,9 @@ class VotingService {
         // Cast vote
         await this.hiveService.vote(account.username, postingKey, author, permlink, weight);
 
-        // Record vote (store scaled weight used in operation)
-        this.dbService.addVoteHistory(account.username, author, permlink, weight, listType, true);
-        this.dbService.incrementDailyVoteCount(author, listType);
+  // Record vote (store scaled weight used in operation)
+  this.dbService.addVoteHistory(account.username, author, permlink, weight, listType, true);
+  successCount += 1;
 
         logger.success(`${account.username} voted on @${author}/${permlink} (${weight/100}%)`);
       } catch (error) {
@@ -233,6 +252,15 @@ class VotingService {
           // If weight isn't defined for some reason, fall back to voteWeight * 100
           this.dbService.addVoteHistory(account.username, author, permlink, (voteWeight || 0) * 100, listType, false, error.message);
         }
+      }
+    }
+
+    // After attempting votes, increment the daily counter by number of successful votes
+    if (successCount > 0) {
+      try {
+        this.dbService.incrementDailyVoteCount(author, listType, successCount);
+      } catch (err) {
+        console.error('Failed to increment daily vote count:', err.message);
       }
     }
   }
