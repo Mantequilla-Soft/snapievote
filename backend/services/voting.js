@@ -184,25 +184,13 @@ class VotingService {
       return;
     }
 
-    // Enforce per-target daily limits across ALL accounts.
-    // Determine how many votes are remaining for this target today.
-    let remainingVotes = Infinity;
-    if (typeof maxVotesPerDay === 'number') {
-      const dailyCount = this.dbService.getDailyVoteCount(author, listType);
-      remainingVotes = Math.max(0, maxVotesPerDay - dailyCount);
-      if (remainingVotes <= 0) {
-        logger.warning(`Skipping ${author}: daily limit reached for ${listType} (${dailyCount}/${maxVotesPerDay})`);
-        return;
-      }
-    }
 
-    // Only attempt up to remainingVotes (if defined) to avoid exceeding daily cap
-    const accountsToUse = (remainingVotes === Infinity)
-      ? accounts
-      : accounts.slice(0, remainingVotes);
-
+    // We enforce per-target daily limits at scheduling time (1 event = 1 vote count).
+    // Here we allow all active accounts to cast votes for the detected event
+    // (subject to each account's VP threshold). If at least one account succeeds,
+    // we count this as ONE vote towards the per-target daily limit.
     let successCount = 0;
-    for (const account of accountsToUse) {
+    for (const account of accounts) {
       try {
         // Get account VP (both upvote and downvote)
         const vpInfo = await this.hiveService.getAccountVP(account.username);
@@ -255,10 +243,10 @@ class VotingService {
       }
     }
 
-    // After attempting votes, increment the daily counter by number of successful votes
+    // After attempting votes, increment the daily counter by ONE if any account succeeded.
     if (successCount > 0) {
       try {
-        this.dbService.incrementDailyVoteCount(author, listType, successCount);
+        this.dbService.incrementDailyVoteCount(author, listType, 1);
       } catch (err) {
         console.error('Failed to increment daily vote count:', err.message);
       }
