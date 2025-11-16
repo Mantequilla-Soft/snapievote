@@ -63,7 +63,8 @@ class Logger {
   }
 
   getLogs(limit = 50) {
-    return this.logs.slice(-limit).reverse();
+    // Return last `limit` logs in oldest->newest order (top -> bottom)
+    return this.logs.slice(-limit);
   }
 
   clear() {
