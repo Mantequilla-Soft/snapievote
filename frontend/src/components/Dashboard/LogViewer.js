@@ -22,7 +22,10 @@ function LogViewer() {
   const fetchLogs = async () => {
     try {
       const response = await bot.getLogs();
-      setLogs(response.data);
+      // API returns newest-first; display oldest-first (top -> bottom) so autoscroll
+      // moves naturally to the newest entries at the bottom.
+      const ordered = Array.isArray(response.data) ? response.data.slice().reverse() : response.data;
+      setLogs(ordered);
     } catch (err) {
       console.error('Failed to fetch logs:', err);
     }
