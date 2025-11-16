@@ -193,9 +193,10 @@ class DatabaseService {
 
   // Vote history methods
   addVoteHistory(voterAccount, targetAuthor, targetPermlink, voteWeight, listType, success = true, error = null) {
+    const timestamp = new Date().toISOString(); // Explicit ISO timestamp
     return this.db.prepare(
-      'INSERT INTO vote_history (voter_account, target_author, target_permlink, vote_weight, list_type, success, error) VALUES (?, ?, ?, ?, ?, ?, ?)'
-    ).run(voterAccount, targetAuthor, targetPermlink, voteWeight, listType, success ? 1 : 0, error);
+      'INSERT INTO vote_history (voter_account, target_author, target_permlink, vote_weight, list_type, success, error, voted_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+    ).run(voterAccount, targetAuthor, targetPermlink, voteWeight, listType, success ? 1 : 0, error, timestamp);
   }
 
   getRecentVoteHistory(limit = 20) {

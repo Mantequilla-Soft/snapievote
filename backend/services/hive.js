@@ -32,9 +32,9 @@ class HiveService {
       const downvoteManabar = account.downvote_manabar;
       const regenSeconds = gprops.downvote_regen_seconds || 432000; // 5 days default
       
-      // Max mana based on vesting shares
+      // Max downvote mana is 25% of voting mana (or 1/4th)
       const vestingShares = parseFloat(account.vesting_shares.split(' ')[0]);
-      const maxMana = vestingShares * 1e6;
+      const maxMana = (vestingShares * 1e6) / 4; // Downvote pool is 25% of upvote pool
       
       const currentMana = parseInt(downvoteManabar.current_mana);
       const lastUpdate = downvoteManabar.last_update_time;
