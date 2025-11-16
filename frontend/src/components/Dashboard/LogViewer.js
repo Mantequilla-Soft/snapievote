@@ -22,14 +22,14 @@ function LogViewer() {
   const fetchLogs = async () => {
     try {
       const response = await bot.getLogs();
-  // API now returns oldest->newest; render as-is (top -> bottom)
-  setLogs(Array.isArray(response.data) ? response.data : []);
+      // API returns oldest->newest; reverse for column-reverse flexbox
+      // so newest entries render at bottom visually
+      const reversed = Array.isArray(response.data) ? response.data.slice().reverse() : [];
+      setLogs(reversed);
     } catch (err) {
       console.error('Failed to fetch logs:', err);
     }
-  };
-
-  const getLevelEmoji = (level) => {
+  };  const getLevelEmoji = (level) => {
     const emojis = {
       info: 'ℹ️',
       success: '✅',
