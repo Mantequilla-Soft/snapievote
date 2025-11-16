@@ -41,7 +41,8 @@ function ListsPanel() {
       if (activeList === 'good') {
         await lists.addGood(formData);
       } else {
-        await lists.addShit({ ...formData, vote_weight: 100 }); // Default 100% for shit list
+        // For shit list, respect the form's vote_weight (do not force 100%)
+        await lists.addShit(formData);
       }
       setShowAddModal(false);
       setFormData({
