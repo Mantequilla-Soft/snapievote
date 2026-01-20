@@ -6,11 +6,45 @@ echo ""
 
 # Function to check if a port is available
 check_port() {
-    if lsof -Pi :$1 -sTCP:LISTEN -t >/dev/null 2>&1 || netstat -tuln 2>/dev/null | grep -q ":$1 "; then
-        return 1
-    else
-        return 0
+    local port=$1
+    
+    # Try multiple methods to check if port is in use
+    # Method 1: lsof
+    if command -v lsof &> /dev/null; then
+        if lsof -Pi :$port -sTCP:LISTEN -t >/dev/null 2>&1; then
+            return 1
+        fi
     fi
+    
+    # Method 2: netstat
+    if command -v netstat &> /dev/null; then
+        if netstat -tuln 2>/dev/null | grep -q ":$port "; then
+            return 1
+        fi
+    fi
+    
+    # Method 3: ss (most reliable on modern Linux)
+    if command -v ss &> /dev/null; then
+        if ss -tuln 2>/dev/null | grep -q ":$port "; then
+            return 1
+        fi
+    fi
+    
+    # Method 4: Try to actually bind to the port using nc or Python
+    if command -v nc &> /dev/null; then
+        if nc -z localhost $port 2>/dev/null; then
+            return 1
+        fi
+    fi
+    
+    # Method 5: Check Docker containers
+    if command -v docker &> /dev/null; then
+        if docker ps --format '{{.Ports}}' 2>/dev/null | grep -q "0.0.0.0:$port"; then
+            return 1
+        fi
+    fi
+    
+    return 0
 }
 
 # Function to find an available port starting from a given port
@@ -45,6 +79,28 @@ echo "✅ Using: $DOCKER_COMPOSE"
 
 # Find available ports
 echo "🔍 Checking for available ports..."
+
+# Check what's using port 3000
+echo ""
+echo "Checking port 3000..."
+if command -v ss &> /dev/null; then
+    ss -tuln | grep ":3000 " || echo "  ss: Port 3000 appears free"
+fi
+if command -v docker &> /dev/null; then
+    docker ps --format 'table {{.Names}}\t{{.Ports}}' | grep ":3000" || echo "  docker: No containers on port 3000"
+fi
+
+# Check what's using port 5000
+echo ""
+echo "Checking port 5000..."
+if command -v ss &> /dev/null; then
+    ss -tuln | grep ":5000 " || echo "  ss: Port 5000 appears free"
+fi
+if command -v docker &> /dev/null; then
+    docker ps --format 'table {{.Names}}\t{{.Ports}}' | grep ":5000" || echo "  docker: No containers on port 5000"
+fi
+
+echo ""
 FRONTEND_PORT=$(find_available_port 3000)
 BACKEND_PORT=$(find_available_port 5000)
 
