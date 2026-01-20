@@ -55,9 +55,13 @@ if [ "$BACKEND_PORT" != "5000" ]; then
     echo "⚠️  Port 5000 in use, using port $BACKEND_PORT for backend"
 fi
 
-# Export ports for docker-compose
-export FRONTEND_PORT
-export BACKEND_PORT
+# Write ports to .env file for docker-compose
+echo "📝 Writing port configuration to .env file..."
+cat > .env << EOF
+FRONTEND_PORT=$FRONTEND_PORT
+BACKEND_PORT=$BACKEND_PORT
+EOF
+echo "✅ Ports configured: Frontend=$FRONTEND_PORT, Backend=$BACKEND_PORT"
 
 # Check if .env exists
 if [ ! -f "backend/.env" ]; then
@@ -72,9 +76,9 @@ fi
 
 # Check if containers are already running and stop them
 echo ""
-if $DOCKER_COMPOSE ps 2>/dev/null | grep -q "Up"; then
-    echo "⚠️  Existing containers detected, stopping them first..."
-    $DOCKER_COMPOSE down
+if $DOCKER_COMPOSE ps -q 2>/dev/null | grep -q .; then
+    echo "⚠️  Existing containers detected, cleaning up..."
+    $DOCKER_COMPOSE down 2>/dev/null
     sleep 2
 fi
 
@@ -88,7 +92,8 @@ echo ""
 echo "⏳ Waiting for services to start..."
 sleep 5
 
-# Check if containers are running
+# Check if containers are running (give them a moment to start or fail)
+sleep 3
 if $DOCKER_COMPOSE ps | grep -q "Up"; then
     echo ""
     echo "✅ SnapieVote is running!"
@@ -97,10 +102,10 @@ if $DOCKER_COMPOSE ps | grep -q "Up"; then
     echo "   Frontend: http://localhost:$FRONTEND_PORT"
     echo "   Backend:  http://localhost:$BACKEND_PORT"
     echo ""
-    echo "📋 Useful commands:"
-    echo "   View logs:    docker compose logs -f"
-    echo "   Stop app:     docker compose down"
-    echo "   Restart app:  docker compose restart"
+    echo "📋 Useful command$DOCKER_COMPOSE logs -f"
+    echo "   Stop app:     $DOCKER_COMPOSE down"
+    echo "   Restart app:  $DOCKER_COMPOSE restart"
+    echo "   View status:  $DOCKER_COMPOSE restart"
     echo "   View status:  docker compose ps"
     echo ""
     echo "🎯 Next steps:"
@@ -113,14 +118,16 @@ if $DOCKER_COMPOSE ps | grep -q "Up"; then
 else
     echo ""
     echo "❌ Something went wrong. Check logs with:"
-    echo "   docker compose logs"
+    echo "   $DOCKER_COMPOSE logs"
     echo ""
-    echo "💡 If you see port conflicts, the script tried to use:"
-    echo "   Frontend: $FRONTEND_PORT"
-    echo "   Backend:  $BACKEND_PORT"
+    echo "💡 Debugging:"
+    echo "   Ports configured: Frontend=$FRONTEND_PORT, Backend=$BACKEND_PORT"
     echo ""
-    echo "   You can manually stop conflicting services or containers:"
+    echo "   Check what failed:"
+    echo "   $DOCKER_COMPOSE ps -a"
+    echo ""
+    echo "   If port conflicts persist, free them manually:"
     echo "   $DOCKER_COMPOSE down"
-    echo "   sudo lsof -ti:$FRONTEND_PORT | xargs kill -9"
-    echo "   sudo lsof -ti:$BACKEND_PORT | xargs kill -9"
+    echo "   sudo lsof -ti:$FRONTEND_PORT | xargs kill -9  # Kill process on frontend port"
+    echo "   sudo lsof -ti:$BACKEND_PORT | xargs kill -9   # Kill process on backend port"
 fi
