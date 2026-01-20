@@ -30,11 +30,18 @@ if ! command -v docker &> /dev/null; then
     exit 1
 fi
 
-# Check if Docker Compose is available
-if ! docker compose version &> /dev/null; then
-    echo "❌ Docker Compose is not available. Please install it."
+# Check if Docker Compose is available (try both old and new syntax)
+if docker compose version &> /dev/null; then
+    DOCKER_COMPOSE="docker compose"
+elif command -v docker-compose &> /dev/null; then
+    DOCKER_COMPOSE="docker-compose"
+else
+    echo "❌ Docker Compose is not available. Please install it:"
+    echo "   sudo curl -L \"https://github.com/docker/compose/releases/latest/download/docker-compose-\$(uname -s)-\$(uname -m)\" -o /usr/local/bin/docker-compose"
+    echo "   sudo chmod +x /usr/local/bin/docker-compose"
     exit 1
 fi
+echo "✅ Using: $DOCKER_COMPOSE"
 
 # Find available ports
 echo "🔍 Checking for available ports..."
@@ -65,9 +72,9 @@ fi
 
 # Check if containers are already running and stop them
 echo ""
-if docker compose ps 2>/dev/null | grep -q "Up"; then
+if $DOCKER_COMPOSE ps 2>/dev/null | grep -q "Up"; then
     echo "⚠️  Existing containers detected, stopping them first..."
-    docker compose down
+    $DOCKER_COMPOSE down
     sleep 2
 fi
 
@@ -75,14 +82,14 @@ echo ""
 echo "🚀 Building and starting Docker containers..."
 echo "   Frontend will be on port: $FRONTEND_PORT"
 echo "   Backend will be on port: $BACKEND_PORT"
-docker compose up -d --build
+$DOCKER_COMPOSE up -d --build
 
 echo ""
 echo "⏳ Waiting for services to start..."
 sleep 5
 
 # Check if containers are running
-if docker compose ps | grep -q "Up"; then
+if $DOCKER_COMPOSE ps | grep -q "Up"; then
     echo ""
     echo "✅ SnapieVote is running!"
     echo ""
@@ -113,7 +120,7 @@ else
     echo "   Backend:  $BACKEND_PORT"
     echo ""
     echo "   You can manually stop conflicting services or containers:"
-    echo "   docker compose down"
+    echo "   $DOCKER_COMPOSE down"
     echo "   sudo lsof -ti:$FRONTEND_PORT | xargs kill -9"
     echo "   sudo lsof -ti:$BACKEND_PORT | xargs kill -9"
 fi

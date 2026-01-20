@@ -41,18 +41,29 @@ else
     echo "✅ Port 5000 is available"
 fi
 
+# Detect docker compose command
+if docker compose version &> /dev/null; then
+    DOCKER_COMPOSE="docker compose"
+elif command -v docker-compose &> /dev/null; then
+    DOCKER_COMPOSE="docker-compose"
+else
+    DOCKER_COMPOSE=""
+fi
+
 # Check for existing Docker containers
-echo ""
-echo "Checking for existing SnapieVote containers..."
-if docker compose ps 2>/dev/null | grep -q "snapievote"; then
-    echo "⚠️  Found existing containers:"
-    docker compose ps
+if [ -n "$DOCKER_COMPOSE" ]; then
     echo ""
-    read -p "Stop these containers? (y/n): " -n 1 -r
-    echo
-    if [[ $REPLY =~ ^[Yy]$ ]]; then
-        docker compose down
-        echo "✅ Containers stopped"
+    echo "Checking for existing SnapieVote containers..."
+    if $DOCKER_COMPOSE ps 2>/dev/null | grep -q "snapievote"; then
+        echo "⚠️  Found existing containers:"
+        $DOCKER_COMPOSE ps
+        echo ""
+        read -p "Stop these containers? (y/n): " -n 1 -r
+        echo
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+            $DOCKER_COMPOSE down
+            echo "✅ Containers stopped"
+        fi
     fi
 fi
 
@@ -69,4 +80,8 @@ echo ""
 echo "Option 3: Manually set ports in .env file"
 echo "  echo 'FRONTEND_PORT=8080' > .env"
 echo "  echo 'BACKEND_PORT=5050' >> .env"
-echo "  docker-compose up -d"
+if [ -n "$DOCKER_COMPOSE" ]; then
+    echo "  $DOCKER_COMPOSE up -d"
+else
+    echo "  docker-compose up -d  # or 'docker compose up -d'"
+fi
